@@ -399,7 +399,7 @@ export default function App() {
     const s = computeScores(answers); setScores(s);
     const iv = setInterval(() => setLoadStep(p => Math.min(p+1, 5)), 1000);
     try {
-      const res = await fetch("http://localhost:3001/api/analyze", {
+      const res = await fetch("https://riskguard-ai-production.up.railway.app/api/analyze", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ messages: [{role:"user", content: buildPrompt(answers, s, sectorLabel)}] })
