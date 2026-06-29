@@ -169,9 +169,9 @@ async function generatePDF(aiData,scores,sectorLabel){
   const lc=scores.global>=70?[220,38,38]:scores.global>=55?[245,158,11]:scores.global>=35?[99,102,241]:[16,185,129];
   doc.setFillColor(...lc);doc.roundedRect(W2/2-30,148,60,22,4,4,"F");
   doc.setTextColor(255,255,255);doc.setFontSize(10);doc.setFont("helvetica","bold");
-  doc.text(`${lvl.label} — ${scores.global}/100`,W2/2,162,{align:"center"});
+  doc.text(`${lvl.label} - ${scores.global}/100`,W2/2,162,{align:"center"});
   doc.setTextColor(100,100,100);doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text("RIMRAE · RARM Challenge 2026 · riskguard-gray.vercel.app",W2/2,280,{align:"center"});
+  doc.text("RIMRAE - RARM Challenge 2026 - riskguard-gray.vercel.app",W2/2,280,{align:"center"});
 
   // PAGE 2 — SCORES
   doc.addPage();y=20;
@@ -180,7 +180,7 @@ async function generatePDF(aiData,scores,sectorLabel){
   doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
   doc.text("Scores par dimension",10,12);
   y=30;
-  const dims=[["⚖ OHADA & Gouvernance",scores.ohada],["👥 RH & Management",scores.rh],["💰 Finance & Fraude",scores.finance],["⚠ HSE & Opérations",scores.hse],["🎯 Risques Sectoriels",scores.sectoriel]];
+  const dims=[["OHADA & Gouvernance",scores.ohada],["RH & Management",scores.rh],["Finance & Fraude",scores.finance],["HSE & Operations",scores.hse],["Risques Sectoriels",scores.sectoriel]];
   dims.forEach(([label,score])=>{
     const c=score>=70?[220,38,38]:score>=40?[245,158,11]:[16,185,129];
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(30,30,30);
@@ -196,7 +196,7 @@ async function generatePDF(aiData,scores,sectorLabel){
   doc.setFillColor(5,10,30);doc.roundedRect(14,y,W2-28,22,4,4,"F");
   doc.setFillColor(212,175,55);doc.rect(14,y,4,22,"F");
   doc.setTextColor(212,175,55);doc.setFontSize(13);doc.setFont("helvetica","bold");
-  doc.text(`Score global : ${scores.global}/100 — ${lvl.label}`,24,y+14);y+=32;
+  doc.text(`Score global : ${scores.global}/100 - ${lvl.label}`,24,y+14);y+=32;
 
   // Résumé
   if(aiData.resume_executif){
@@ -212,7 +212,7 @@ async function generatePDF(aiData,scores,sectorLabel){
     doc.setFillColor(219,234,254);doc.roundedRect(14,y,W2-28,20,3,3,"F");
     doc.setFillColor(29,78,216);doc.rect(14,y,4,20,"F");
     doc.setTextColor(29,78,216);doc.setFontSize(9);doc.setFont("helvetica","bold");
-    doc.text("ALERTE CONFORMITÉ OHADA",20,y+7);
+    doc.text("ALERTE CONFORMITE OHADA",20,y+7);
     doc.setFont("helvetica","normal");
     const al=doc.splitTextToSize(aiData.alerte_ohada,W2-44);
     doc.text(al.slice(0,1),20,y+15);y+=28;
@@ -224,7 +224,7 @@ async function generatePDF(aiData,scores,sectorLabel){
     checkY(45);
     doc.setFontSize(11);doc.setFont("helvetica","bold");doc.setTextColor(5,10,30);
     doc.text("Projection sur 6 mois",14,y);y+=8;
-    const bars=[[`Aujourd'hui`,sp.score_actuel,[220,38,38]],[`Dans 3 mois`,sp.score_3mois,[245,158,11]],[`Dans 6 mois`,sp.score_6mois,[16,185,129]]];
+    const bars=[["Aujourd'hui",sp.score_actuel,[220,38,38]],["Dans 3 mois",sp.score_3mois,[245,158,11]],["Dans 6 mois",sp.score_6mois,[16,185,129]]];
     bars.forEach(([label,val,c])=>{
       doc.setFontSize(9);doc.setFont("helvetica","normal");doc.setTextColor(80,80,80);
       doc.text(label,14,y+5);
@@ -236,7 +236,7 @@ async function generatePDF(aiData,scores,sectorLabel){
     if(sp.economies_estimees){
       doc.setFillColor(220,252,231);doc.roundedRect(14,y,W2-28,14,3,3,"F");
       doc.setTextColor(21,128,61);doc.setFontSize(9);doc.setFont("helvetica","bold");
-      doc.text(`💰 Pertes évitées estimées : ${sp.economies_estimees}`,20,y+9);y+=22;
+      doc.text(`Pertes evitees estimees : ${sp.economies_estimees}`,20,y+9);y+=22;
     }
   }
 
@@ -245,20 +245,20 @@ async function generatePDF(aiData,scores,sectorLabel){
   doc.setFillColor(5,10,30);doc.rect(0,0,W2,18,"F");
   doc.setFillColor(220,38,38);doc.rect(0,0,4,18,"F");
   doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text("Points critiques identifiés",10,12);y=28;
+  doc.text("Points critiques identifies",10,12);y=28;
 
   aiData.points_critiques?.forEach((p,i)=>{
     checkY(42);
     doc.setFillColor(254,242,242);doc.roundedRect(14,y,W2-28,38,3,3,"F");
     doc.setFillColor(220,38,38);doc.rect(14,y,5,38,"F");
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(185,28,28);
-    const urg=p.urgence==="IMMÉDIAT"?"🔴":p.urgence==="COURT TERME"?"🟡":"🔵";
-    doc.text(`${i+1}. ${p.titre}  ${urg} ${p.urgence}`,22,y+9);
+    const urg="["+p.urgence+"]";
+    doc.text(`${i+1}. ${p.titre} [${p.urgence}]`,22,y+9);
     doc.setFont("helvetica","normal");doc.setTextColor(60,60,60);doc.setFontSize(9);
     const dl=doc.splitTextToSize(p.description,W2-48);
     doc.text(dl.slice(0,2),22,y+17);
     doc.setFont("helvetica","bold");doc.setTextColor(185,28,28);doc.setFontSize(9);
-    doc.text(`Impact financier : ${p.impact_financier}`,22,y+33);y+=46;
+    doc.text(`Impact : ${p.impact_financier}`,22,y+33);y+=46;
   });
 
   // Points positifs
@@ -272,7 +272,7 @@ async function generatePDF(aiData,scores,sectorLabel){
     doc.setFillColor(240,253,244);doc.roundedRect(14,y,W2-28,18,3,3,"F");
     doc.setFillColor(16,185,129);doc.rect(14,y,4,18,"F");
     doc.setTextColor(21,128,61);doc.setFontSize(10);doc.setFont("helvetica","bold");
-    doc.text(`✓ ${p.titre}`,22,y+7);
+    doc.text(`+ ${p.titre}`,22,y+7);
     doc.setFont("helvetica","normal");doc.setTextColor(60,60,60);doc.setFontSize(9);
     doc.text(doc.splitTextToSize(p.description,W2-46).slice(0,1)[0],22,y+14);y+=26;
   });
@@ -282,7 +282,7 @@ async function generatePDF(aiData,scores,sectorLabel){
   doc.setFillColor(5,10,30);doc.rect(0,0,W2,18,"F");
   doc.setFillColor(212,175,55);doc.rect(0,0,4,18,"F");
   doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text("Plan d'action personnalisé",10,12);y=28;
+  doc.text("Plan d'action personnalise",10,12);y=28;
 
   aiData.plan_action?.forEach((a,i)=>{
     checkY(48);
@@ -292,14 +292,14 @@ async function generatePDF(aiData,scores,sectorLabel){
     doc.setFillColor(...bg);doc.roundedRect(14,y,W2-28,42,3,3,"F");
     doc.setFillColor(...ac);doc.rect(14,y,5,42,"F");
     doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(...tc);
-    doc.text(`${a.priorite} · ${a.delai}`,22,y+8);
+    doc.text(`${a.priorite} - ${a.delai}`,22,y+8);
     doc.setFontSize(10);doc.setTextColor(10,10,40);
     doc.text(`${i+1}. ${a.titre}`,22,y+16);
     doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60,60,60);
     const dl=doc.splitTextToSize(a.description,W2-48);
     doc.text(dl.slice(0,2),22,y+24);
     doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(...tc);
-    doc.text(`Coût : ${a.cout_estime}  |  Responsable : ${a.responsable}`,22,y+38);y+=50;
+    doc.text(`Cout : ${a.cout_estime} | Responsable : ${a.responsable}`,22,y+38);y+=50;
   });
 
   // Message dirigeant
@@ -322,7 +322,7 @@ async function generatePDF(aiData,scores,sectorLabel){
     doc.setFillColor(5,10,30);doc.rect(0,ph-10,W2,10,"F");
     doc.setFillColor(212,175,55);doc.rect(0,ph-10,W2,1,"F");
     doc.setTextColor(150,150,150);doc.setFontSize(7);doc.setFont("helvetica","normal");
-    doc.text("RiskGuard AI — Diagnostic confidentiel — RIMRAE · RARM 2026",14,ph-3);
+    doc.text("RiskGuard AI - Diagnostic confidentiel - RIMRAE RARM 2026",14,ph-3);
     doc.text(`${i}/${total}`,W2-14,ph-3,{align:"right"});
   }
   doc.save(`RiskGuard-${sectorLabel.replace(/\//g,"-")}-${new Date().toISOString().split("T")[0]}.pdf`);
