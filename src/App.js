@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { jsPDF } from "jspdf";
+import { useState, useEffect } from "react";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SECTEURS = ["Commerce / Distribution","Services / Conseil","Industrie / BTP","Agriculture / Agro-industrie","Santé / Éducation","Transport / Logistique"];
@@ -135,8 +134,18 @@ Adapte tout au contexte ivoirien : cite CEPICI, CGECI, DGI, CNPS, Tribunal Comme
 }
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
-function generatePDF(aiData,scores,sectorLabel){
+async function generatePDF(aiData,scores,sectorLabel){
   if(!aiData){return;}
+  // Charger jsPDF depuis CDN si pas encore chargé
+  if(!window.jspdf){
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement("script");
+      s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      s.onload=resolve;s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+  const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
   const W2=doc.internal.pageSize.getWidth();
   let y=0;
@@ -575,10 +584,10 @@ export default function App(){
           {tabs.map((t,i)=>(
             <button key={i} className={`ntab ${screen===screens[i]?"active":screens.indexOf(screen)>i?"done":""}`}
               onClick={()=>{
-                if(screens[i]==="home")restart();
-                else if(screens[i]==="results"&&scores)setScreen("results");
-                else if(screens[i]==="actions"&&aiData)setScreen("actions");
-                else if(screens[i]==="questionnaire"&&screen!=="home")setScreen("questionnaire");
+                if(screens[i]==="home"){restart();}
+                else if(screens[i]==="questionnaire"){if(screen!=="home")setScreen("questionnaire");}
+                else if(screens[i]==="results"){if(scores)setScreen("results");}
+                else if(screens[i]==="actions"){if(aiData)setScreen("actions");}
               }}>{t}</button>
           ))}
         </div>
