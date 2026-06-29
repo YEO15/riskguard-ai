@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SECTEURS = ["Commerce / Distribution","Services / Conseil","Industrie / BTP","Agriculture / Agro-industrie","Santé / Éducation","Transport / Logistique"];
@@ -775,7 +775,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-accent" onClick={()=>setScreen("actions")}>📋 Plan d'action complet →</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>{generatePDF(aiData,scores,sectorLabel).catch(e=>alert("Erreur PDF: "+e.message));}}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>generatePDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
             <button className="btn-outline" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
@@ -832,7 +832,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-outline" onClick={()=>setScreen("results")}>← Retour aux résultats</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>{generatePDF(aiData,scores,sectorLabel).catch(e=>alert("Erreur PDF: "+e.message));}}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>generatePDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
             <button className="btn-accent" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
