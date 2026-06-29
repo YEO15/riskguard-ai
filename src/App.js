@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SECTEURS = ["Commerce / Distribution","Services / Conseil","Industrie / BTP","Agriculture / Agro-industrie","Santé / Éducation","Transport / Logistique"];
