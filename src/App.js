@@ -1,5 +1,7 @@
 /* eslint-disable */
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { jsPDF } from "jspdf";
+import { jsPDF } from "jspdf";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SECTEURS = ["Commerce / Distribution","Services / Conseil","Industrie / BTP","Agriculture / Agro-industrie","Santé / Éducation","Transport / Logistique"];
@@ -135,18 +137,8 @@ Adapte tout au contexte ivoirien : cite CEPICI, CGECI, DGI, CNPS, Tribunal Comme
 }
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
-async function generatePDF(aiData,scores,sectorLabel){
+function generatePDF(aiData,scores,sectorLabel){
   if(!aiData){return;}
-  // Charger jsPDF depuis CDN si pas encore chargé
-  if(!window.jspdf){
-    await new Promise((resolve,reject)=>{
-      const s=document.createElement("script");
-      s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-      s.onload=resolve;s.onerror=reject;
-      document.head.appendChild(s);
-    });
-  }
-  const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
   const W2=doc.internal.pageSize.getWidth();
   let y=0;
@@ -528,11 +520,17 @@ h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif}
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function App(){
-  const [screen,setScreen]=useState("home");
+  const [screen,setScreen]=useState(()=>{
+    try{const s=localStorage.getItem("rg_screen");return(s==="results"||s==="actions")?s:"home";}catch{return"home";}
+  });
   const [secIdx,setSecIdx]=useState(0);
   const [answers,setAnswers]=useState({});
-  const [scores,setScores]=useState(null);
-  const [aiData,setAiData]=useState(null);
+  const [scores,setScores]=useState(()=>{
+    try{const s=localStorage.getItem("rg_scores");return s?JSON.parse(s):null;}catch{return null;}
+  });
+  const [aiData,setAiData]=useState(()=>{
+    try{const s=localStorage.getItem("rg_aidata");return s?JSON.parse(s):null;}catch{return null;}
+  });
   const [loadStep,setLoadStep]=useState(0);
   const [error,setError]=useState(null);
 
@@ -552,7 +550,7 @@ export default function App(){
 
   async function runAnalysis(){
     setScreen("loading");setLoadStep(0);setError(null);
-    const s=computeScores(answers);setScores(s);
+    const s=computeScores(answers);setScores(s);try{localStorage.setItem("rg_scores",JSON.stringify(s));}catch{}
     const iv=setInterval(()=>setLoadStep(p=>Math.min(p+1,5)),1000);
     try{
       const res=await fetch("https://riskguard-ai-production.up.railway.app/api/analyze",{
@@ -562,12 +560,14 @@ export default function App(){
       clearInterval(iv);setLoadStep(6);
       const d=await res.json();
       const txt=d.content?.map(b=>b.text||"").join("")||"";
-      setAiData(JSON.parse(txt.replace(/```json|```/g,"").trim()));
+      const parsed=JSON.parse(txt.replace(/```json|```/g,"").trim());
+      setAiData(parsed);
+      try{localStorage.setItem("rg_aidata",JSON.stringify(parsed));localStorage.setItem("rg_scores",JSON.stringify(s));localStorage.setItem("rg_screen","results");}catch{}
     }catch(e){clearInterval(iv);setLoadStep(6);setError(e.message);}
     setTimeout(()=>setScreen("results"),500);
   }
 
-  function restart(){setScreen("home");setSecIdx(0);setAnswers({});setScores(null);setAiData(null);setError(null);setLoadStep(0);}
+  function restart(){setScreen("home");setSecIdx(0);setAnswers({});setScores(null);setAiData(null);setError(null);setLoadStep(0);try{localStorage.removeItem("rg_scores");localStorage.removeItem("rg_aidata");localStorage.removeItem("rg_screen");}catch{}}
 
   const tabs=["Accueil","Diagnostic","Résultats","Plan d'action"];
   const screens=["home","questionnaire","results","actions"];
@@ -776,7 +776,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-accent" onClick={()=>setScreen("actions")}>📋 Plan d'action complet →</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>generatePDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>{try{generatePDF(aiData,scores,sectorLabel);}catch(e){alert("Erreur PDF: "+e.message);}}}>⬇️ Télécharger PDF</button>}
             <button className="btn-outline" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
@@ -833,7 +833,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-outline" onClick={()=>setScreen("results")}>← Retour aux résultats</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>generatePDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>{try{generatePDF(aiData,scores,sectorLabel);}catch(e){alert("Erreur PDF: "+e.message);}}}>⬇️ Télécharger PDF</button>}
             <button className="btn-accent" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
