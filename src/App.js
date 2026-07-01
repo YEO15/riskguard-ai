@@ -138,9 +138,6 @@ Adapte tout au contexte ivoirien : cite CEPICI, CGECI, DGI, CNPS, Tribunal Comme
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 
--${new Date().toISOString().split("T")[0]}.pdf`);
-}
-
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 async function downloadPDF(aiData, scores, sectorLabel) {
