@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { useState, useEffect } from "react";
 import { jsPDF } from "jspdf";
-import { jsPDF } from "jspdf";
+
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const SECTEURS = ["Commerce / Distribution","Services / Conseil","Industrie / BTP","Agriculture / Agro-industrie","Santé / Éducation","Transport / Logistique"];
