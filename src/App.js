@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { useState, useEffect } from "react";
-import { jsPDF } from "jspdf";
+
 
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
