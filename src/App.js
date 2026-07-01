@@ -138,203 +138,31 @@ Adapte tout au contexte ivoirien : cite CEPICI, CGECI, DGI, CNPS, Tribunal Comme
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 
-function cleanText(str){
-  if(!str) return "";
-  return String(str)
-    .replace(/[\u2013\u2014]/g, "-")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2022]/g, "*")
-    .replace(/[\u00B7]/g, ".")
-    .replace(/[^\x00-\x7F\xC0-\xFF]/g, "")
-    .trim();
-}
-
-function generatePDF(aiData,scores,sectorLabel){
-  if(!aiData){return;}
-  const doc=new jsPDF();
-  const W2=doc.internal.pageSize.getWidth();
-  let y=0;
-  const addPage=()=>{doc.addPage();y=20;};
-  const checkY=(h=40)=>{if(y+h>272)addPage();};
-
-  // COVER
-  doc.setFillColor(5,10,30);doc.rect(0,0,W2,297,"F");
-  doc.setFillColor(212,175,55);doc.rect(0,0,W2,3,"F");
-  doc.setFillColor(212,175,55);doc.rect(0,294,W2,3,"F");
-  doc.setTextColor(212,175,55);doc.setFontSize(28);doc.setFont("helvetica","bold");
-  doc.text("RiskGuard AI",W2/2,80,{align:"center"});
-  doc.setTextColor(255,255,255);doc.setFontSize(13);doc.setFont("helvetica","normal");
-  doc.text("Rapport de Diagnostic Risk Management",W2/2,95,{align:"center"});
-  doc.setDrawColor(212,175,55);doc.setLineWidth(0.5);doc.line(30,105,W2-30,105);
-  doc.setFontSize(11);doc.setTextColor(180,180,180);
-  doc.text(cleanText(`Secteur : ${sectorLabel}`),W2/2,118,{align:"center"});
-  doc.text(cleanText(`Date : ${new Date().toLocaleDateString("fr-FR")}`),W2/2,128,{align:"center"});
-  const lvl=getRiskLevel(scores.global);
-  doc.setFillColor(lvl.color==="CRITIQUE"?[220,38,38]:lvl.color==="ÉLEVÉ"?[245,158,11]:lvl.color==="MODÉRÉ"?[99,102,241]:[16,185,129]);
-  const lc=scores.global>=70?[220,38,38]:scores.global>=55?[245,158,11]:scores.global>=35?[99,102,241]:[16,185,129];
-  doc.setFillColor(...lc);doc.roundedRect(W2/2-30,148,60,22,4,4,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(10);doc.setFont("helvetica","bold");
-  doc.text(cleanText(`${lvl.label} - ${scores.global}/100`),W2/2,162,{align:"center"});
-  doc.setTextColor(100,100,100);doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text("RIMRAE - RARM Challenge 2026 - riskguard-gray.vercel.app",W2/2,280,{align:"center"});
-
-  // PAGE 2 — SCORES
-  doc.addPage();y=20;
-  doc.setFillColor(5,10,30);doc.rect(0,0,W2,18,"F");
-  doc.setFillColor(212,175,55);doc.rect(0,0,4,18,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text("Scores par dimension",10,12);
-  y=30;
-  const dims=[["OHADA & Gouvernance",scores.ohada],["RH & Management",scores.rh],["Finance & Fraude",scores.finance],["HSE & Operations",scores.hse],["Risques Sectoriels",scores.sectoriel]];
-  dims.forEach(([label,score])=>{
-    const c=score>=70?[220,38,38]:score>=40?[245,158,11]:[16,185,129];
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(30,30,30);
-    doc.text(label,14,y+5);
-    doc.setFillColor(230,230,230);doc.roundedRect(105,y,75,8,2,2,"F");
-    doc.setFillColor(...c);doc.roundedRect(105,y,Math.max(3,score*0.75),8,2,2,"F");
-    doc.setTextColor(...c);doc.setFont("helvetica","bold");doc.setFontSize(10);
-    doc.text(cleanText(`${score}/100`),186,y+6);y+=18;
-  });
-
-  // Score global box
-  y+=4;
-  doc.setFillColor(5,10,30);doc.roundedRect(14,y,W2-28,22,4,4,"F");
-  doc.setFillColor(212,175,55);doc.rect(14,y,4,22,"F");
-  doc.setTextColor(212,175,55);doc.setFontSize(13);doc.setFont("helvetica","bold");
-  doc.text(cleanText(`Score global : ${scores.global}/100 - ${lvl.label}`),24,y+14);y+=32;
-
-  // Résumé
-  if(aiData.resume_executif){
-    doc.setFillColor(245,245,255);doc.roundedRect(14,y,W2-28,28,3,3,"F");
-    doc.setFillColor(5,10,30);doc.rect(14,y,4,28,"F");
-    doc.setTextColor(30,30,30);doc.setFontSize(10);doc.setFont("helvetica","italic");
-    const ls=doc.splitTextToSize(cleanText(aiData.resume_executif),W2-42);
-    doc.text(ls.slice(0,4),22,y+8);y+=36;
-  }
-
-  // OHADA Alert
-  if(aiData.alerte_ohada){
-    doc.setFillColor(219,234,254);doc.roundedRect(14,y,W2-28,20,3,3,"F");
-    doc.setFillColor(29,78,216);doc.rect(14,y,4,20,"F");
-    doc.setTextColor(29,78,216);doc.setFontSize(9);doc.setFont("helvetica","bold");
-    doc.text("ALERTE CONFORMITE OHADA",20,y+7);
-    doc.setFont("helvetica","normal");
-    const al=doc.splitTextToSize(cleanText(aiData.alerte_ohada),W2-44);
-    doc.text(al.slice(0,1),20,y+15);y+=28;
-  }
-
-  // Projection
-  if(aiData.score_projection){
-    const sp=aiData.score_projection;
-    checkY(45);
-    doc.setFontSize(11);doc.setFont("helvetica","bold");doc.setTextColor(5,10,30);
-    doc.text("Projection sur 6 mois",14,y);y+=8;
-    const bars=[["Aujourd'hui",sp.score_actuel,[220,38,38]],["Dans 3 mois",sp.score_3mois,[245,158,11]],["Dans 6 mois",sp.score_6mois,[16,185,129]]];
-    bars.forEach(([label,val,c])=>{
-      doc.setFontSize(9);doc.setFont("helvetica","normal");doc.setTextColor(80,80,80);
-      doc.text(label,14,y+5);
-      doc.setFillColor(220,220,220);doc.roundedRect(60,y,100,7,2,2,"F");
-      doc.setFillColor(...c);doc.roundedRect(60,y,Math.max(3,val),7,2,2,"F");
-      doc.setTextColor(...c);doc.setFont("helvetica","bold");doc.setFontSize(9);
-      doc.text(cleanText(`${val}/100`),166,y+6);y+=14;
-    });
-    if(sp.economies_estimees){
-      doc.setFillColor(220,252,231);doc.roundedRect(14,y,W2-28,14,3,3,"F");
-      doc.setTextColor(21,128,61);doc.setFontSize(9);doc.setFont("helvetica","bold");
-      doc.text(cleanText(`Pertes evitees estimees : ${sp.economies_estimees}`),20,y+9);y+=22;
-    }
-  }
-
-  // PAGE 3 — CRITIQUES
-  doc.addPage();y=20;
-  doc.setFillColor(5,10,30);doc.rect(0,0,W2,18,"F");
-  doc.setFillColor(220,38,38);doc.rect(0,0,4,18,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text("Points critiques identifies",10,12);y=28;
-
-  aiData.points_critiques?.forEach((p,i)=>{
-    checkY(42);
-    doc.setFillColor(254,242,242);doc.roundedRect(14,y,W2-28,38,3,3,"F");
-    doc.setFillColor(220,38,38);doc.rect(14,y,5,38,"F");
-    doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(185,28,28);
-    const urg="["+p.urgence+"]";
-    doc.text(cleanText(`${i+1}. ${p.titre} [${p.urgence}]`),22,y+9);
-    doc.setFont("helvetica","normal");doc.setTextColor(60,60,60);doc.setFontSize(9);
-    const dl=doc.splitTextToSize(cleanText(p.description),W2-48);
-    doc.text(dl.slice(0,2),22,y+17);
-    doc.setFont("helvetica","bold");doc.setTextColor(185,28,28);doc.setFontSize(9);
-    doc.text(cleanText(`Impact : ${p.impact_financier}`),22,y+33);y+=46;
-  });
-
-  // Points positifs
-  checkY(30);y+=4;
-  doc.setFillColor(5,10,30);doc.rect(0,y-6,W2,16,"F");
-  doc.setFillColor(16,185,129);doc.rect(0,y-6,4,16,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");
-  doc.text("Points positifs",10,y+4);y+=18;
-  aiData.points_positifs?.forEach((p)=>{
-    checkY(22);
-    doc.setFillColor(240,253,244);doc.roundedRect(14,y,W2-28,18,3,3,"F");
-    doc.setFillColor(16,185,129);doc.rect(14,y,4,18,"F");
-    doc.setTextColor(21,128,61);doc.setFontSize(10);doc.setFont("helvetica","bold");
-    doc.text(cleanText(`+ ${p.titre}`),22,y+7);
-    doc.setFont("helvetica","normal");doc.setTextColor(60,60,60);doc.setFontSize(9);
-    doc.text(doc.splitTextToSize(cleanText(p.description),W2-46).slice(0,1)[0],22,y+14);y+=26;
-  });
-
-  // PAGE 4 — PLAN D'ACTION
-  doc.addPage();y=20;
-  doc.setFillColor(5,10,30);doc.rect(0,0,W2,18,"F");
-  doc.setFillColor(212,175,55);doc.rect(0,0,4,18,"F");
-  doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-  doc.text("Plan d'action personnalise",10,12);y=28;
-
-  aiData.plan_action?.forEach((a,i)=>{
-    checkY(48);
-    const bg=a.priorite==="URGENT"?[254,226,226]:a.priorite==="IMPORTANT"?[254,243,199]:[224,231,255];
-    const tc=a.priorite==="URGENT"?[185,28,28]:a.priorite==="IMPORTANT"?[180,83,9]:[67,56,202];
-    const ac=a.priorite==="URGENT"?[220,38,38]:a.priorite==="IMPORTANT"?[245,158,11]:[99,102,241];
-    doc.setFillColor(...bg);doc.roundedRect(14,y,W2-28,42,3,3,"F");
-    doc.setFillColor(...ac);doc.rect(14,y,5,42,"F");
-    doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(...tc);
-    doc.text(cleanText(`${a.priorite} - ${a.delai}`),22,y+8);
-    doc.setFontSize(10);doc.setTextColor(10,10,40);
-    doc.text(cleanText(`${i+1}. ${a.titre}`),22,y+16);
-    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(60,60,60);
-    const dl=doc.splitTextToSize(cleanText(a.description),W2-48);
-    doc.text(dl.slice(0,2),22,y+24);
-    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(...tc);
-    doc.text(cleanText(`Cout : ${a.cout_estime} | Responsable : ${a.responsable}`),22,y+38);y+=50;
-  });
-
-  // Message dirigeant
-  if(aiData.message_dirigeant){
-    checkY(30);
-    doc.setFillColor(5,10,30);doc.roundedRect(14,y,W2-28,24,4,4,"F");
-    doc.setFillColor(212,175,55);doc.rect(14,y,4,24,"F");
-    doc.setTextColor(212,175,55);doc.setFontSize(9);doc.setFont("helvetica","bold");
-    doc.text("MESSAGE AU DIRIGEANT",22,y+8);
-    doc.setFont("helvetica","italic");doc.setTextColor(200,200,200);
-    const ml=doc.splitTextToSize(cleanText(aiData.message_dirigeant),W2-46);
-    doc.text(ml.slice(0,2),22,y+16);
-  }
-
-  // Footer toutes pages
-  const total=doc.internal.getNumberOfPages();
-  for(let i=1;i<=total;i++){
-    doc.setPage(i);
-    const ph=doc.internal.pageSize.getHeight();
-    doc.setFillColor(5,10,30);doc.rect(0,ph-10,W2,10,"F");
-    doc.setFillColor(212,175,55);doc.rect(0,ph-10,W2,1,"F");
-    doc.setTextColor(150,150,150);doc.setFontSize(7);doc.setFont("helvetica","normal");
-    doc.text("RiskGuard AI - Diagnostic confidentiel - RIMRAE RARM 2026",14,ph-3);
-    doc.text(cleanText(`${i}/${total}`),W2-14,ph-3,{align:"right"});
-  }
-  doc.save(`RiskGuard-${sectorLabel.replace(/\//g,"-")}-${new Date().toISOString().split("T")[0]}.pdf`);
+-${new Date().toISOString().split("T")[0]}.pdf`);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+async function downloadPDF(aiData, scores, sectorLabel) {
+  try {
+    const res = await fetch("https://riskguard-ai-production.up.railway.app/api/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ aiData, scores, sectorLabel }),
+    });
+    if (!res.ok) throw new Error("Erreur serveur PDF");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `RiskGuard-${(sectorLabel||"diagnostic").replace(/[^a-zA-Z0-9]/g,"-")}-${new Date().toISOString().split("T")[0]}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert("Erreur PDF: " + e.message);
+  }
+}
+
 function getRiskColor(s){return s>=70?"#ef4444":s>=45?"#f59e0b":"#10b981";}
 function getRiskLevel(s){
   if(s>=70)return{label:"CRITIQUE",bg:"#fef2f2",color:"#dc2626",dot:"#ef4444"};
@@ -789,7 +617,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-accent" onClick={()=>setScreen("actions")}>📋 Plan d'action complet →</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>{try{generatePDF(aiData,scores,sectorLabel);}catch(e){alert("Erreur PDF: "+e.message);}}}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>downloadPDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
             <button className="btn-outline" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
@@ -846,7 +674,7 @@ export default function App(){
           )}
           <div className="btn-row">
             <button className="btn-outline" onClick={()=>setScreen("results")}>← Retour aux résultats</button>
-            {aiData&&<button className="btn-pdf" onClick={()=>{try{generatePDF(aiData,scores,sectorLabel);}catch(e){alert("Erreur PDF: "+e.message);}}}>⬇️ Télécharger PDF</button>}
+            {aiData&&<button className="btn-pdf" onClick={()=>downloadPDF(aiData,scores,sectorLabel)}>⬇️ Télécharger PDF</button>}
             <button className="btn-accent" onClick={restart}>🔄 Nouveau diagnostic</button>
           </div>
         </div>
